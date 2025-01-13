@@ -1,0 +1,102 @@
+/* Custom Variables */
+:root {
+  --primary-color: #099246;
+  --primary-hover: #099246;
+  --bg-gradient: linear-gradient(135deg, #f6f8fc 0%, #f1f5f9 100%);
+  --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --transition: all 0.3s ease;
+}
+
+/* Global Styles */
+body {
+  background: var(--bg-gradient);
+  min-height: 100vh;
+}
+
+/* Card Animations */
+.card {
+  transition: var(--transition);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--card-shadow);
+}
+
+/* Custom Button Styles */
+.btn-primary {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  transition: var(--transition);
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+/* Form Controls */
+.form-control:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 0.2rem rgba(37, 99, 235, 0.25);
+}
+
+/* Table Styles */
+.table {
+  border-collapse: separate;
+  border-spacing: 0 8px;
+}
+
+.table tbody tr {
+  transition: var(--transition);
+  background: white;
+}
+
+.table tbody tr:hover {
+  transform: scale(1.01);
+  box-shadow: var(--card-shadow);
+}
+
+.table td {
+  padding: 1rem;
+  vertical-align: middle;
+}
+
+/* Book Cover Image */
+.book-cover {
+  transition: var(--transition);
+}
+
+.book-cover:hover {
+  transform: scale(1.1);
+}
+
+/* Toast Animations */
+.toast {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Login Page */
+.login-card {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* Navbar */
+.navbar {
+  background: #099246 !important;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
