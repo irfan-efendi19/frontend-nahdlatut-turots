@@ -103,7 +103,14 @@ function renderBooks() {
                   </div>
                   <div class="mb-3">
                     <label class="form-label">Tahun</label>
-                    <input type="number" class="form-control" name="publishedYear" required>
+                        <input 
+                          type="number" 
+                          class="form-control" 
+                          name="publishedYear" 
+                          min="1000" 
+                          max="9999" 
+                          required 
+                          oninput="if(this.value.length > 4) this.value = this.value.slice(0, 4);">
                   </div>
                   <div class="mb-3">
                     <label class="form-label">Kategori</label>
@@ -258,19 +265,19 @@ async function loadBooks() {
       </tr>
     `).join('')
   } catch (error) {
-    showToast('Error', 'Error loading books: ' + error.message, 'danger')
+    showToast('Error', 'Tidak menemukan kitab: ' + error.message, 'danger')
   }
 }
 
 // Add to window for onclick access
 window.handleDeleteBook = async (id) => {
-  if (confirm('Are you sure you want to delete this book?')) {
+  if (confirm('Yakin akan menghapus kitab?')) {
     try {
       await deleteBook(id)
       loadBooks()
-      showToast('Success', 'Book deleted successfully!')
+      showToast('Success', 'Kitab telah dihapus!')
     } catch (error) {
-      showToast('Error', 'Error deleting book: ' + error.message, 'danger')
+      showToast('Error', 'Kesalahan saat menghapus kitab: ' + error.message, 'danger')
     }
   }
 }
