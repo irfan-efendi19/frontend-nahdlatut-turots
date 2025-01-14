@@ -101,6 +101,15 @@ function renderBooks() {
                     <label class="form-label">Penulis</label>
                     <input type="text" class="form-control" name="author" required>
                   </div>
+                      <div class="mb-3">
+                        <label class="form-label">Deskripsi</label>
+                        <textarea 
+                          class="form-control" 
+                          name="description" 
+                          rows="4" 
+                          required>
+                        </textarea>
+                      </div>
                   <div class="mb-3">
                     <label class="form-label">Tahun</label>
                     <input type="number" class="form-control" name="publishedYear" min="1000" max="9999" required>
