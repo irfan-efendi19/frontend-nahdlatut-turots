@@ -103,18 +103,15 @@ function renderBooks() {
                   </div>
                   <div class="mb-3">
                     <label class="form-label">Tahun</label>
-                        <input 
-                          type="number" 
-                          class="form-control" 
-                          name="publishedYear" 
-                          min="1000" 
-                          max="9999" 
-                          required 
-                          oninput="if(this.value.length > 4) this.value = this.value.slice(0, 4);">
+                    <input type="number" class="form-control" name="publishedYear" min="1000" max="9999" required>
                   </div>
                   <div class="mb-3">
                     <label class="form-label">Kategori</label>
                     <input type="text" class="form-control" name="genre" required>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Jumlah Halaman</label>
+                    <input type="number" class="form-control" name="pages" min="1" required>
                   </div>
                   <div class="mb-3">
                     <label class="form-label">Thumbnail</label>
@@ -150,6 +147,7 @@ function renderBooks() {
                         <th>Penulis</th>
                         <th>Tahun</th>
                         <th>Kategori</th>
+                        <th>Halaman</th>
                         <th>Aksi</th>
                       </tr>
                     </thead>
@@ -251,12 +249,11 @@ async function loadBooks() {
             style="width: 60px; height: 80px; object-fit: cover;"
           >
         </td>
-        <td>
-          <h6 class="mb-0">${book.title}</h6>
-        </td>
+        <td>${book.title}</td>
         <td>${book.author}</td>
         <td>${book.publishedYear}</td>
         <td><span class="badge bg-secondary">${book.genre}</span></td>
+        <td>${book.pages}</td>
         <td>
           <button class="btn btn-outline-danger btn-sm" onclick="handleDeleteBook('${book.id}')">
             <i class="bi bi-trash"></i>
