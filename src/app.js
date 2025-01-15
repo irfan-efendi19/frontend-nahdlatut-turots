@@ -1,4 +1,4 @@
-import { getBooks, getBook, createBook, deleteBook } from './api.js'
+import { getBooks, getBook, createBook, updateBook, deleteBook } from './api.js'
 import { login, logout, getCurrentUser, requireAuth } from './auth.js'
 
 function createApp() {
@@ -85,14 +85,15 @@ function renderBooks() {
 
       <div class="container">
         <div class="row">
-          <!-- Add Book Form -->
+          <!-- Add/Edit Book Form -->
           <div class="col-md-4 mb-4">
             <div class="card shadow-sm">
               <div class="card-header bg-white">
-                <h5 class="card-title mb-0">Tambah Kitab Baru</h5>
+                <h5 class="card-title mb-0" id="formTitle">Tambah Kitab Baru</h5>
               </div>
               <div class="card-body">
-                <form id="addBookForm">
+                <form id="bookForm">
+                  <input type="hidden" name="bookId" id="bookId">
                   <div class="mb-3">
                     <label class="form-label">Judul</label>
                     <input type="text" class="form-control" name="title" required>
@@ -101,39 +102,50 @@ function renderBooks() {
                     <label class="form-label">Penulis</label>
                     <input type="text" class="form-control" name="author" required>
                   </div>
-                      <div class="mb-3">
-                        <label class="form-label">Deskripsi</label>
-                        <textarea 
-                          class="form-control" 
-                          name="description" 
-                          rows="4" 
-                          required>
-                        </textarea>
-                      </div>
+                  <div class="mb-3">
+                    <label class="form-label">Deskripsi</label>
+                    <textarea 
+                      class="form-control" 
+                      name="description" 
+                      rows="4" 
+                      required>
+                    </textarea>
+                  </div>
                   <div class="mb-3">
                     <label class="form-label">Tahun</label>
-                    <input type="number" class="form-control" name="publishedYear" min="1000" max="9999" required>
+                    <input type="number" class="form-control" name="published_year" min="1000" max="9999">
                   </div>
                   <div class="mb-3">
                     <label class="form-label">Kategori</label>
-                    <input type="text" class="form-control" name="genre" required>
+                    <select class="form-select" name="genre">
+                      <option value="" disabled selected>Pilih kategori</option>
+                      <option value="genre1">Genre 1</option>
+                      <option value="genre2">Genre 2</option>
+                      <option value="genre3">Genre 3</option>
+                    </select>
                   </div>
                   <div class="mb-3">
                     <label class="form-label">Jumlah Halaman</label>
-                    <input type="number" class="form-control" name="pages" min="1" required>
+                    <input type="number" class="form-control" name="pages" min="1">
                   </div>
                   <div class="mb-3">
                     <label class="form-label">Thumbnail</label>
-                    <input type="file" class="form-control" name="thumbnail" accept="image/*" required>
+                    <input type="file" class="form-control" name="thumbnail" accept="image/*">
                     <div class="form-text">Upload Sampul Kitab</div>
                   </div>
                   <div class="mb-3">
                     <label class="form-label">PDF File</label>
-                    <input type="file" class="form-control" name="pdf" accept=".pdf" required>
+                    <input type="file" class="form-control" name="pdf" accept=".pdf">
+                    <div class="form-text">Biarkan kosong untuk mempertahankan file yang ada</div>
                   </div>
-                  <button type="submit" class="btn btn-primary w-100">
-                    <i class="bi bi-plus-circle me-2"></i>Tambah Kitab
-                  </button>
+                  <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-grow-1" id="submitBtn">
+                      <i class="bi bi-plus-circle me-2"></i>Tambah Kitab
+                    </button>
+                    <button type="button" class="btn btn-secondary d-none" id="cancelBtn" onclick="resetForm()">
+                      <i class="bi bi-x-circle me-2"></i>Batal
+                    </button>
+                  </div>
                 </form>
               </div>
             </div>
@@ -144,7 +156,7 @@ function renderBooks() {
             <div class="card shadow-sm">
               <div class="card-header bg-white d-flex justify-content-between align-items-center">
                 <h5 class="card-title mb-0">Koleksi Kitab</h5>
-                <span class="badge bg-primary" id="bookCount">0 books</span>
+                <span class="badge bg-primary" id="bookCount">0 kitab</span>
               </div>
               <div class="card-body">
                 <div class="table-responsive">
@@ -172,7 +184,7 @@ function renderBooks() {
   `
 
   // Event Listeners
-  document.getElementById('addBookForm').addEventListener('submit', handleAddBook)
+  document.getElementById('bookForm').addEventListener('submit', handleBookSubmit)
   loadBooks()
 }
 
@@ -185,38 +197,111 @@ async function handleLogin(e) {
   try {
     const user = login(username, password)
     window.location.hash = '#books'
-    showToast('Success', 'Selamat Datang Kembali, ' + user.name)
+    showToast('Sukses', 'Selamat Datang Kembali, ' + user.name)
   } catch (error) {
     showToast('Error', error.message, 'danger')
   }
 }
 
-// Add to window for onclick access
 window.handleLogout = () => {
   logout()
   window.location.hash = '#login'
   showToast('Sukses', 'Sukses keluar')
 }
 
-async function handleAddBook(e) {
+async function handleBookSubmit(e) {
   e.preventDefault()
   const submitBtn = e.target.querySelector('button[type="submit"]')
-  submitBtn.disabled = true
-  submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Adding...'
-  
   const formData = new FormData(e.target)
+  const bookId = formData.get('bookId')
+  const isEdit = bookId !== ''
+
+  submitBtn.disabled = true
+  submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>' + 
+    (isEdit ? 'Memperbarui...' : 'Menambahkan...')
+
+  // Konversi nilai 'published_year' dan 'pages' menjadi angka
+  const publishedYear = Number(formData.get('published_year'))
+  const pages = Number(formData.get('pages'))
+
+  // Jika angka tidak valid, beri peringatan dan hentikan pengiriman data
+  if (isNaN(publishedYear)) {
+    showToast('Error', 'Tahun diterbitkan tidak valid', 'danger')
+    submitBtn.disabled = false
+    submitBtn.innerHTML = '<i class="bi bi-plus-circle me-2"></i>' + (isEdit ? 'Perbarui Kitab' : 'Tambah Kitab')
+    return
+  }
+
+  if (isNaN(pages)) {
+    showToast('Error', 'Jumlah halaman tidak valid', 'danger')
+    submitBtn.disabled = false
+    submitBtn.innerHTML = '<i class="bi bi-plus-circle me-2"></i>' + (isEdit ? 'Perbarui Kitab' : 'Tambah Kitab')
+    return
+  }
+
+  // Set nilai yang sudah dikonversi ke dalam formData
+  formData.set('published_year', publishedYear)
+  formData.set('pages', pages)
   
   try {
-    await createBook(formData)
-    e.target.reset()
+    if (isEdit) {
+      await updateBook(bookId, formData)
+      showToast('Sukses', 'Kitab berhasil diperbarui!', 'success')
+    } else {
+      await createBook(formData)
+      showToast('Sukses', 'Kitab berhasil ditambahkan!', 'success')
+    }
+    resetForm()
     loadBooks()
-    showToast('Sukses', 'Sukses menambahkan kitab!', 'success')
   } catch (error) {
-    showToast('Kesalahan', error.message, 'danger')
+    showToast('Error', error.message, 'danger')
   } finally {
     submitBtn.disabled = false
-    submitBtn.innerHTML = '<i class="bi bi-plus-circle me-2"></i>Add Book'
+    submitBtn.innerHTML = '<i class="bi bi-plus-circle me-2"></i>' + 
+      (isEdit ? 'Perbarui Kitab' : 'Tambah Kitab')
   }
+}
+
+window.editBook = async (id) => {
+  try {
+    const book = await getBook(id)
+    const form = document.getElementById('bookForm')
+    const formTitle = document.getElementById('formTitle')
+    const submitBtn = document.getElementById('submitBtn')
+    const cancelBtn = document.getElementById('cancelBtn')
+    
+    // Set form values
+    form.bookId.value = book.id
+    form.title.value = book.title
+    form.author.value = book.author
+    form.description.value = book.description
+    form.published_year.value = book.published_year
+    form.genre.value = book.genre
+    form.pages.value = book.pages
+    
+    // Update UI
+    formTitle.textContent = 'Edit Kitab'
+    submitBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Perbarui Kitab'
+    cancelBtn.classList.remove('d-none')
+    
+    // Scroll to form
+    form.scrollIntoView({ behavior: 'smooth' })
+  } catch (error) {
+    showToast('Error', 'Gagal memuat data kitab: ' + error.message, 'danger')
+  }
+}
+
+window.resetForm = () => {
+  const form = document.getElementById('bookForm')
+  const formTitle = document.getElementById('formTitle')
+  const submitBtn = document.getElementById('submitBtn')
+  const cancelBtn = document.getElementById('cancelBtn')
+  
+  form.reset()
+  form.bookId.value = ''
+  formTitle.textContent = 'Tambah Kitab Baru'
+  submitBtn.innerHTML = '<i class="bi bi-plus-circle me-2"></i>Tambah Kitab'
+  cancelBtn.classList.add('d-none')
 }
 
 function showToast(title, message, type = 'success') {
@@ -246,7 +331,7 @@ async function loadBooks() {
   try {
     const books = await getBooks()
     const tbody = document.getElementById('booksTableBody')
-    document.getElementById('bookCount').textContent = `${books.length} books`
+    document.getElementById('bookCount').textContent = `${books.length} kitab`
     
     tbody.innerHTML = books.map(book => `
       <tr>
@@ -260,13 +345,18 @@ async function loadBooks() {
         </td>
         <td>${book.title}</td>
         <td>${book.author}</td>
-        <td>${book.publishedYear}</td>
+        <td>${book.published_year}</td>
         <td><span class="badge bg-secondary">${book.genre}</span></td>
         <td>${book.pages}</td>
         <td>
-          <button class="btn btn-outline-danger btn-sm" onclick="handleDeleteBook('${book.id}')">
-            <i class="bi bi-trash"></i>
-          </button>
+          <div class="btn-group">
+            <button class="btn btn-outline-primary btn-sm" onclick="editBook('${book.id}')" title="Edit">
+              <i class="bi bi-pencil"></i>
+            </button>
+            <button class="btn btn-outline-danger btn-sm" onclick="handleDeleteBook('${book.id}')" title="Hapus">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
         </td>
       </tr>
     `).join('')
@@ -275,13 +365,12 @@ async function loadBooks() {
   }
 }
 
-// Add to window for onclick access
 window.handleDeleteBook = async (id) => {
   if (confirm('Yakin akan menghapus kitab?')) {
     try {
       await deleteBook(id)
       loadBooks()
-      showToast('Success', 'Kitab telah dihapus!')
+      showToast('Sukses', 'Kitab telah dihapus!')
     } catch (error) {
       showToast('Error', 'Kesalahan saat menghapus kitab: ' + error.message, 'danger')
     }
