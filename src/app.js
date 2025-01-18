@@ -104,20 +104,15 @@ function renderBooks() {
                   </div>
                   <div class="mb-3">
                     <label class="form-label">Deskripsi</label>
-                    <textarea 
-                      class="form-control" 
-                      name="description" 
-                      rows="4" 
-                      required>
-                    </textarea>
+                    <textarea class="form-control" name="description" rows="4" required></textarea>
                   </div>
                   <div class="mb-3">
                     <label class="form-label">Tahun</label>
-                    <input type="number" class="form-control" name="published_year" min="1000" max="9999">
+                    <input type="number" class="form-control" name="published_year" min="0" max="9999" oninput="this.value = this.value.slice(0, 4);">
                   </div>
                   <div class="mb-3">
                     <label class="form-label">Kategori</label>
-                    <select class="form-select" name="genre">
+                    <select class="form-select" name="genre" required>
                       <option value="" disabled selected>Pilih kategori</option>
                       <option value="genre1">Genre 1</option>
                       <option value="genre2">Genre 2</option>
