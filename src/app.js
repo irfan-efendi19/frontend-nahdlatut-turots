@@ -73,7 +73,7 @@ function renderBooks() {
     <div class="min-vh-100 bg-light">
       <nav class="navbar navbar-dark bg-primary mb-4">
         <div class="container">
-          <span class="navbar-brand mb-0 h1">Kitab Nahdlatut Turots</span>
+          <span class="navbar-brand mb-0 h1"><img src="/src/img/logo.jpg" alt="Logo" width="30" height="30" class="d-inline-block align-text-top">  Repository Kitab Nahdlatut Turots</span>
           <div class="d-flex align-items-center">
             <span class="text-white me-3">Selamat Datang, ${user.name}</span>
             <button class="btn btn-outline-light btn-sm" onclick="handleLogout()">
@@ -158,7 +158,6 @@ function renderBooks() {
                   <table class="table align-middle table-hover">
                     <thead class="table-light">
                       <tr>
-                        <th>Cover</th>
                         <th>Judul</th>
                         <th>Penulis</th>
                         <th>Tahun</th>
