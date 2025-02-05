@@ -114,16 +114,6 @@ body {
   isolation: isolate;
 }
 
-.table tbody tr::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: var(--radius-md);
-  background: var(--primary-gradient);
-  opacity: 0;
-  z-index: -1;
-  transition: var(--transition-normal);
-}
 
 .table tbody tr:hover {
   transform: scale(1.01) translateY(-2px);
@@ -219,4 +209,3 @@ body {
 .navbar span{
   color: #1f2937 !important;
 }
-

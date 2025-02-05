@@ -34,3 +34,10 @@ export async function deleteBook(id) {
   const response = await axios.delete(`${API_URL}/books/${id}`)
   return response.data
 }
+
+export async function searchBooks(query) {
+  const response = await axios.get(`${API_URL}/books/search`, {
+    params: { q: query }
+  })
+  return response.data
+}

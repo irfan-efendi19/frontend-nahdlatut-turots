@@ -67,13 +67,13 @@ function renderLogin() {
 }
 
 function renderBooks() {
-  const user = getCurrentUser()
+  const user = getCurrentUser();
   
   document.getElementById('app').innerHTML = `
     <div class="min-vh-100 bg-light">
       <nav class="navbar navbar-dark bg-primary mb-4">
         <div class="container">
-          <span class="navbar-brand mb-0 h1"><img src="/src/img/logo.jpg" alt="Logo" width="30" height="30" class="d-inline-block align-text-top">  Repository Kitab Nahdlatut Turots</span>
+          <span class="navbar-brand mb-0 h1"><img src="https://storage.googleapis.com/nahdlatut-turots-bucket/logo.jpg" alt="Logo" width="30" height="30" class="d-inline-block align-text-top"> Repository Kitab Nahdlatut Turots</span>
           <div class="d-flex align-items-center">
             <span class="text-white me-3">Selamat Datang, ${user.name}</span>
             <button class="btn btn-outline-light btn-sm" onclick="handleLogout()">
@@ -82,6 +82,18 @@ function renderBooks() {
           </div>
         </div>
       </nav>
+
+      <div class="container">
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <input type="text" id="searchInput" class="form-control" placeholder="Cari Kitab...">
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-primary w-100" onclick="searchBooks()">
+              <i class="bi bi-search"></i> Cari
+            </button>
+          </div>
+        </div>
 
       <div class="container">
         <div class="row">
@@ -97,14 +109,17 @@ function renderBooks() {
                   <div class="mb-3">
                     <label class="form-label">Judul</label>
                     <input type="text" class="form-control" name="title" required>
+                    <div class="form-text">*wajib diisi</div>
                   </div>
                   <div class="mb-3">
                     <label class="form-label">Penulis</label>
                     <input type="text" class="form-control" name="author" required>
+                    <div class="form-text">*wajib diisi</div>
                   </div>
                   <div class="mb-3">
                     <label class="form-label">Deskripsi</label>
                     <textarea class="form-control" name="description" rows="4" required></textarea>
+                    <div class="form-text">*wajib diisi</div>
                   </div>
                   <div class="mb-3">
                     <label class="form-label">Tahun</label>
@@ -118,6 +133,7 @@ function renderBooks() {
                       <option value="genre2">Genre 2</option>
                       <option value="genre3">Genre 3</option>
                     </select>
+                    <div class="form-text">*wajib diisi</div>
                   </div>
                   <div class="mb-3">
                     <label class="form-label">Jumlah Halaman</label>
@@ -169,18 +185,21 @@ function renderBooks() {
                     <tbody id="booksTableBody"></tbody>
                   </table>
                 </div>
+                <div id="paginationContainer" class="d-flex justify-content-center mt-3"></div>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-  `
+  `;
 
   // Event Listeners
-  document.getElementById('bookForm').addEventListener('submit', handleBookSubmit)
-  loadBooks()
+  document.getElementById('bookForm').addEventListener('submit', handleBookSubmit);
+  loadBooks();
 }
+
+
 
 async function handleLogin(e) {
   e.preventDefault()
@@ -196,6 +215,78 @@ async function handleLogin(e) {
     showToast('Error', error.message, 'danger')
   }
 }
+
+
+async function searchBooks() {
+  const query = document.getElementById('searchInput').value.trim();
+  if (!query) {
+    loadBooks(); // If no search query, load all books
+    return;
+  }
+
+  try {
+    const response = await fetch(`https://backend-644986869008.asia-southeast2.run.app/books/search?q=${encodeURIComponent(query)}`);
+    const textResponse = await response.text(); // Get raw response as text
+    
+    if (!response.ok) throw new Error('Kosong');
+
+    // Try parsing the response to JSON
+    try {
+      const books = JSON.parse(textResponse);
+      renderBooksTable(books);
+    } catch (jsonError) {
+      throw new Error('Expected JSON, but got HTML: ' + textResponse);
+    }
+  } catch (error) {
+    showToast('Kesalahan', 'Tidak menemukan kitab: ' + error.message, 'danger');
+  }
+}
+
+function renderBooksTable(books) {
+  const booksTableBody = document.getElementById('booksTableBody');
+  const bookCount = document.getElementById('bookCount');
+
+  // Clear any existing rows
+  booksTableBody.innerHTML = '';
+
+  if (books.length === 0) {
+    bookCount.textContent = '0 kitab';
+    return;
+  }
+
+  // Set book count
+  bookCount.textContent = `${books.length} kitab`;
+
+  // Render rows for each book
+  books.forEach(book => {
+    const row = document.createElement('tr');
+
+    row.innerHTML = `
+      <td>${book.title}</td>
+      <td>${book.author}</td>
+      <td>${book.year}</td>
+      <td>${book.category}</td>
+      <td>${book.pages}</td>
+      <td>
+      <div class=btn-group>
+        <button class="btn btn-outline-primary btn-sm" onclick="editBook('${book.id}')" title="Edit">
+              <i class="bi bi-pencil"></i>
+            </button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="editBook('${book.id}')" title="Edit">
+              <i class="bi bi-trash"></i>
+            </button>
+            </div>
+      </td>
+    `;
+
+    booksTableBody.appendChild(row);
+  });
+}
+
+
+
+window.searchBooks = searchBooks;  
+
 
 window.handleLogout = () => {
   logout()
@@ -321,22 +412,24 @@ function showToast(title, message, type = 'success') {
   }, 3000)
 }
 
+let currentPage = 1;
+const booksPerPage = 5; // Tentukan jumlah buku per halaman
+
 async function loadBooks() {
   try {
-    const books = await getBooks()
-    const tbody = document.getElementById('booksTableBody')
-    document.getElementById('bookCount').textContent = `${books.length} kitab`
+    const books = await getBooks();
+    const totalBooks = books.length;
+    const totalPages = Math.ceil(totalBooks / booksPerPage);
     
-    tbody.innerHTML = books.map(book => `
+    // Hitung buku yang akan ditampilkan pada halaman saat ini
+    const startIndex = (currentPage - 1) * booksPerPage;
+    const paginatedBooks = books.slice(startIndex, startIndex + booksPerPage);
+    
+    const tbody = document.getElementById('booksTableBody');
+    document.getElementById('bookCount').textContent = `${totalBooks} kitab`;
+
+    tbody.innerHTML = paginatedBooks.map(book => `
       <tr>
-        <td>
-          <img 
-            src="${book.thumbnailUrl}" 
-            alt="${book.title} cover" 
-            class="rounded shadow-sm book-cover" 
-            style="width: 60px; height: 80px; object-fit: cover;"
-          >
-        </td>
         <td>${book.title}</td>
         <td>${book.author}</td>
         <td>${book.published_year}</td>
@@ -353,11 +446,50 @@ async function loadBooks() {
           </div>
         </td>
       </tr>
-    `).join('')
+    `).join('');
+    
+    renderPagination(currentPage, totalPages);
   } catch (error) {
-    showToast('Error', 'Tidak menemukan kitab: ' + error.message, 'danger')
+    showToast('Error', 'Tidak menemukan kitab: ' + error.message, 'danger');
   }
 }
+
+function goToPage(page) {
+  console.log('Navigating to page:', page); // Debugging line
+  currentPage = page;
+  loadBooks();
+}
+
+function renderPagination(currentPage, totalPages) {
+  const paginationContainer = document.getElementById('paginationContainer');
+  
+  let paginationHtml = '';
+  if (currentPage > 1) {
+    paginationHtml += `<button class="btn btn-outline-primary" onclick="goToPage(${currentPage - 1})">Previous</button>`;
+  }
+
+  for (let i = 1; i <= totalPages; i++) {
+    paginationHtml += ` 
+      <button class="btn btn-outline-${i === currentPage ? 'primary' : 'secondary'}" onclick="goToPage(${i})">
+        ${i}
+      </button>
+    `;
+  }
+
+  if (currentPage < totalPages) {
+    paginationHtml += `<button class="btn btn-outline-primary" onclick="goToPage(${currentPage + 1})">Next</button>`;
+  }
+
+  paginationContainer.innerHTML = paginationHtml;
+}
+
+
+window.goToPage = function(page) {
+  currentPage = page;
+  loadBooks();
+}
+
+
 
 window.handleDeleteBook = async (id) => {
   if (confirm('Yakin akan menghapus kitab?')) {
