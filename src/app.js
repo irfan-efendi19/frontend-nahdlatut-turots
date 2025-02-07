@@ -1,5 +1,4 @@
-import { getBooks, getBook, createBook, updateBook, deleteBook } from './api.js'
-import { login, logout, getCurrentUser, requireAuth } from './auth.js'
+import { getBooks, getBook, createBook, updateBook, deleteBook, login, logout, getCurrentUser, requireAuth } from './api.js'
 
 function createApp() {
   window.addEventListener('hashchange', handleRoute)
@@ -42,8 +41,8 @@ function renderLogin() {
               <div class="card-body p-4">
                 <form id="loginForm">
                   <div class="mb-3">
-                    <label class="form-label">Username</label>
-                    <input type="text" class="form-control" name="username" required>
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" name="email" required>
                   </div>
                   <div class="mb-3">
                     <label class="form-label">Password</label>
@@ -75,7 +74,7 @@ function renderBooks() {
         <div class="container">
           <span class="navbar-brand mb-0 h1"><img src="https://storage.googleapis.com/nahdlatut-turots-bucket/logo.jpg" alt="Logo" width="30" height="30" class="d-inline-block align-text-top"> Repository Kitab Nahdlatut Turots</span>
           <div class="d-flex align-items-center">
-            <span class="text-white me-3">Selamat Datang, ${user.name}</span>
+            <span class="text-white me-3">Selamat Datang, Admin</span>
             <button class="btn btn-outline-light btn-sm" onclick="handleLogout()">
               <i class="bi bi-box-arrow-right me-2"></i>Keluar
             </button>
@@ -94,7 +93,7 @@ function renderBooks() {
             </button>
           </div>
         </div>
-
+        
       <div class="container">
         <div class="row">
           <!-- Add/Edit Book Form -->
@@ -129,9 +128,10 @@ function renderBooks() {
                     <label class="form-label">Kategori</label>
                     <select class="form-select" name="genre" required>
                       <option value="" disabled selected>Pilih kategori</option>
-                      <option value="genre1">Genre 1</option>
-                      <option value="genre2">Genre 2</option>
-                      <option value="genre3">Genre 3</option>
+                      <option value="Nahwu Sharaf">Nahwu Sharaf</option>
+                      <option value="Al-Quran">Al-Quran</option>
+                      <option value="Tasawuf">Tasawuf</option>
+                      <option value="Akidah">Akidah</option>
                     </select>
                     <div class="form-text">*wajib diisi</div>
                   </div>
@@ -201,18 +201,19 @@ function renderBooks() {
 
 
 
-async function handleLogin(e) {
-  e.preventDefault()
-  const formData = new FormData(e.target)
-  const username = formData.get('username')
+async function handleLogin(event) {
+  event.preventDefault()
+
+  const formData = new FormData(event.target)
+  const email = formData.get('email')
   const password = formData.get('password')
-  
+
   try {
-    const user = login(username, password)
+    const user = await login(email, password)
+    localStorage.setItem('admin', JSON.stringify(user))
     window.location.hash = '#books'
-    showToast('Sukses', 'Selamat Datang Kembali, ' + user.name)
   } catch (error) {
-    showToast('Error', error.message, 'danger')
+    alert(error.message)
   }
 }
 
@@ -220,22 +221,21 @@ async function handleLogin(e) {
 async function searchBooks() {
   const query = document.getElementById('searchInput').value.trim();
   if (!query) {
-    loadBooks(); // If no search query, load all books
+    loadBooks(); 
     return;
   }
 
   try {
     const response = await fetch(`https://backend-644986869008.asia-southeast2.run.app/books/search?q=${encodeURIComponent(query)}`);
-    const textResponse = await response.text(); // Get raw response as text
+    const textResponse = await response.text(); 
     
     if (!response.ok) throw new Error('Kosong');
 
-    // Try parsing the response to JSON
     try {
       const books = JSON.parse(textResponse);
       renderBooksTable(books);
     } catch (jsonError) {
-      throw new Error('Expected JSON, but got HTML: ' + textResponse);
+      throw new Error('Kesalahan: ' + textResponse);
     }
   } catch (error) {
     showToast('Kesalahan', 'Tidak menemukan kitab: ' + error.message, 'danger');
@@ -418,13 +418,14 @@ const booksPerPage = 5; // Tentukan jumlah buku per halaman
 async function loadBooks() {
   try {
     const books = await getBooks();
+    books.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     const totalBooks = books.length;
     const totalPages = Math.ceil(totalBooks / booksPerPage);
-    
+
     // Hitung buku yang akan ditampilkan pada halaman saat ini
     const startIndex = (currentPage - 1) * booksPerPage;
     const paginatedBooks = books.slice(startIndex, startIndex + booksPerPage);
-    
+
     const tbody = document.getElementById('booksTableBody');
     document.getElementById('bookCount').textContent = `${totalBooks} kitab`;
 
@@ -447,12 +448,13 @@ async function loadBooks() {
         </td>
       </tr>
     `).join('');
-    
+
     renderPagination(currentPage, totalPages);
   } catch (error) {
     showToast('Error', 'Tidak menemukan kitab: ' + error.message, 'danger');
   }
 }
+
 
 function goToPage(page) {
   console.log('Navigating to page:', page); // Debugging line
