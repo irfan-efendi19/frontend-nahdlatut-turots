@@ -23,6 +23,9 @@ function handleRoute() {
         renderBooks()
       }
       break
+      case '#about': 
+      renderAbout()
+      break
     default:
       window.location.hash = '#login'
   }
@@ -46,7 +49,7 @@ function renderLogin() {
                   </div>
                   <div class="mb-3">
                     <label class="form-label">Password</label>
-                    <input type="password" class="form-control" name="password" required>
+                    <input type="password" class="form-control" name="password" minlength="8" required>
                   </div>
                   <button type="submit" class="btn btn-primary w-100">
                     <i class="bi bi-box-arrow-in-right me-2"></i>Login
@@ -82,6 +85,7 @@ function renderBooks() {
         </div>
       </nav>
 
+      <!-- Bar Pencarian -->
       <div class="container">
         <div class="row mb-3">
           <div class="col-md-4">
@@ -364,7 +368,7 @@ window.editBook = async (id) => {
     form.genre.value = book.genre
     form.pages.value = book.pages
     
-    // Update UI
+
     formTitle.textContent = 'Edit Kitab'
     submitBtn.innerHTML = '<i class="bi bi-check-circle me-2"></i>Perbarui Kitab'
     cancelBtn.classList.remove('d-none')
@@ -422,7 +426,6 @@ async function loadBooks() {
     const totalBooks = books.length;
     const totalPages = Math.ceil(totalBooks / booksPerPage);
 
-    // Hitung buku yang akan ditampilkan pada halaman saat ini
     const startIndex = (currentPage - 1) * booksPerPage;
     const paginatedBooks = books.slice(startIndex, startIndex + booksPerPage);
 
@@ -457,8 +460,7 @@ async function loadBooks() {
 
 
 function goToPage(page) {
-  console.log('Navigating to page:', page); // Debugging line
-  currentPage = page;
+  console.log('Navigating to page:', page); 
   loadBooks();
 }
 
